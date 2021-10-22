@@ -22,14 +22,6 @@ void CPU::run() {
                                 inc();
                                 break;
 
-                        case LOADR:
-                                FLAG = 0;
-                                MAR = PC;
-                                MBR = mem[MAR];
-                                R2 = MBR;
-                                inc();
-                                break;
-
                         case STORE:
                                 FLAG = 0;
                                 MAR = PC;

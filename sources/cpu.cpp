@@ -116,7 +116,6 @@ void CPU::jg() {
 
 int CPU::run(char *memory) {
         mem = memory;
-        int counter = 1;
         while(true) {
                 IR = mem[PC];
                 PC++;

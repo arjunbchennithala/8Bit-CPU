@@ -38,6 +38,7 @@ class CPU{
 
         char ACC, FLAG, IR, PC;
         int temp;
+        int counter = 0;
 
         void load();
         void store();

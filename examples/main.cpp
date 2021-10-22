@@ -2,9 +2,6 @@
 #include <iostream>
 
 int main() {
-        
-        CPU cpu;
-        
         char mem[] = {
                 LOAD, 10,
                 MUL, 3,
@@ -24,9 +21,9 @@ int main() {
         std::cout<<std::endl;
 
         
-        int cycles = cpu.run(mem);
+        CPU cpu(mem);
         
-        std::cout<<"After "<<cycles<<" cycles :\t";        
+        std::cout<<"After execution :\t";        
         for(int i=0; i<sizeof(mem)+1; i++){
                 std::cout<<(int)mem[i]<<" ";
         }

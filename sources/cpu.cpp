@@ -1,185 +1,185 @@
 #include "cpu.h"
 
-void CPU::load(){
-        ACC = mem[PC];
-        PC = (PC==MAX)? 0 : ++PC;
-}
-
-void CPU::store() {
-        mem[PC] = ACC;
-        PC = (PC==MAX)? 0 : ++PC;
-}
-
-void CPU::add() {
-        temp = ACC + mem[PC];
-        if(temp > MAX) {
-                ACC = MAX;
-                FLAG |= OVERFLOW;
+void CPU::inc() {
+        if(PC>=MAX) {
+                PC = 0;
         }else{
-                ACC = temp;
-        }
-        PC = (PC==MAX)? 0 : ++PC;
-}
-
-void CPU::mul() {
-        temp = ACC * mem[PC];
-        if(temp > MAX) {
-                ACC = MAX;
-                FLAG |= OVERFLOW;
-        }else{
-                ACC = temp;
-        }
-        PC = (PC==MAX)? 0 : ++PC;
-}
-
-void CPU::div() {
-        temp = ACC / mem[PC];
-        if(temp < MIN) {
-                ACC = MAX;
-                FLAG |= UNDERFLOW;
-        }else{
-                ACC = temp;
-        }
-        PC = (PC==MAX)? 0 : ++PC;
-}
-
-
-void CPU::sub() {
-        temp = ACC - mem[PC];
-        if(temp < MIN) {
-                ACC = MAX;
-                FLAG |= UNDERFLOW;
-        }else{
-                ACC = temp;
-        }
-        PC = (PC==MAX)? 0 : ++PC;
-}
-
-void CPU::comp() {
-        if(ACC<mem[PC]){
-                FLAG |= LESS;
-        }
-        else if(ACC>mem[PC]) {
-                FLAG |= GREAT;
-        }
-        else{
-                FLAG |= EQUAL;
-        }
-
-        PC = (PC==MAX)? 0 : ++PC;
-}
-
-void CPU::jmp() {
-        PC = mem[PC];
-}
-
-void CPU::jl() {
-        if(FLAG & LESS) {
-                jmp();
-        }else{
-                PC = (PC==MAX)? 0 : ++PC;
-        }
-}
-
-void CPU::jle() {
-        if(FLAG & (LESS | EQUAL)) {
-                jmp();
-        }else{
-                PC = (PC==MAX)? 0 : ++PC;
-        }
-}
-
-void CPU::je() {
-        if(FLAG & EQUAL) {
-                jmp();
-        }else{
-                PC = (PC==MAX)? 0 : ++PC;
-        }
-}
-
-void CPU::jge() {
-        if(FLAG & (GREAT | EQUAL)){
-                jmp();
-        }else{
-                PC = (PC==MAX)? 0 : ++PC;
-        }
-}
-
-void CPU::jg() {
-        if(FLAG & GREAT) {
-                jmp();
-        }else{
-                PC = (PC==MAX)? 0 : ++PC;
+                PC++;
         }
 }
 
 
-int CPU::run(char *memory) {
-        mem = memory;
-        int counter = 1;
+void CPU::run() {
         while(true) {
                 IR = mem[PC];
-                PC++;
-                counter++;
+                inc();
                 switch(IR) {
                         case LOAD:
                                 FLAG = 0;
-                                load();
+                                MAR = PC;
+                                MBR = mem[MAR];
+                                R1 = MBR;
+                                inc();
                                 break;
+
+                        case LOADR:
+                                FLAG = 0;
+                                MAR = PC;
+                                MBR = mem[MAR];
+                                R2 = MBR;
+                                inc();
+                                break;
+
                         case STORE:
                                 FLAG = 0;
-                                store();
+                                MAR = PC;
+                                MBR = R1;
+                                mem[MAR] = MBR;
+                                inc();
                                 break;
+
+                        case STORER:
+                                FLAG = 0;
+                                MAR = PC;
+                                MBR = R2;
+                                mem[MAR] = MBR;
+                                inc();
+                                break;
+
                         case ADD:
                                 FLAG = 0;
-                                add();
+                                MAR = PC;
+                                MBR = mem[MAR];
+                                R2 = MBR;
+                                temp = R1 + R2;
+                                if(temp>MAX){R1 = MAX;FLAG |= OVERFLOW;}else{R1 = temp;}
+                                inc();
                                 break;
+
                         case SUB:
                                 FLAG = 0;
-                                sub();
+                                MAR = PC;
+                                MBR = mem[MAR];
+                                R2 = MBR;
+                                temp = R1 - R2;
+                                if(temp<0){R1 = 0;FLAG |= UNDERFLOW;}else{R1 = temp;}
+                                inc();
                                 break;
+
                         case MUL:
                                 FLAG = 0;
-                                mul();
+                                MAR = PC;
+                                MBR = mem[MAR];
+                                R2 = MBR;
+                                temp = R1;
+                                for(int i=1; i<R2; i++){
+                                        temp += R1;
+                                }
+                                if(temp>MAX){R1 = MAX;FLAG |= OVERFLOW;}else{R1 = temp;}
+                                inc();
                                 break;
+
                         case DIV:
                                 FLAG = 0;
-                                div();
+                                MAR = PC;
+                                MBR = mem[MAR];
+                                R2 = MBR;
+                                temp = R1;
+                                int i;
+                                for(i=0; ((temp - R2) >= 0); i++) {     //(temp > R2) && 
+                                        temp -= R2;
+                                }
+                                if(temp<0){R1 = 0;FLAG |= UNDERFLOW;}else{R1 = i; R2 = temp;}
+                                inc();
                                 break;
+
                         case COMP:
                                 FLAG = 0;
-                                comp();
+                                MAR = PC;
+                                MBR = mem[MAR];
+                                R2 = MBR;
+                                if(R2<R1) {
+                                        FLAG |= LESS;
+                                }else if(R2>R1) {
+                                        FLAG |= GREAT;
+                                }else{
+                                        FLAG |= EQUAL;
+                                }
+                                inc();
                                 break;
+
                         case JMP:
-                                jmp();
+                                MAR = PC;
+                                MBR = mem[MAR];
+                                PC = MBR;
                                 FLAG = 0;
                                 break;
+
                         case JL:
-                                jl();
+                                MAR = PC;
+                                MBR = mem[MAR];
+                                if(FLAG & LESS) {
+                                        PC = MBR;
+                                }else{
+                                        inc();
+                                }
                                 FLAG = 0;
                                 break;
+
                         case JLE:
-                                jle();
+                                MAR = PC;
+                                MBR = mem[MAR];
+                                if(FLAG & (LESS | EQUAL)) {
+                                        PC = MBR;
+                                }else{
+                                        inc();
+                                }
                                 FLAG = 0;
                                 break;
+
                         case JE:
-                                je();
+                                MAR = PC;
+                                MBR = mem[MAR];
+                                if(FLAG & EQUAL) {
+                                        PC = MBR;
+                                }else{
+                                        inc();
+                                }
                                 FLAG = 0;
                                 break;
+
                         case JGE:
-                                jge();
+                                MAR = PC;
+                                MBR = mem[MAR];
+                                if(FLAG & (GREAT | EQUAL)) {
+                                        PC = MBR;
+                                }else{
+                                        inc();
+                                }
                                 FLAG = 0;
                                 break;
+
                         case JG:
-                                jg();
+                                MAR = PC;
+                                MBR = mem[MAR];
+                                if(FLAG & GREAT) {
+                                        PC = MBR;
+                                }else{
+                                        inc();
+                                }
                                 FLAG = 0;
                                 break;
+
                         case NOP:
+                                FLAG = 0;
+                                inc();
                                 break;
+
                         case OFF:
-                                return counter;
+                                return;
+
                         default:
-                                return counter;
+                                return;
                 }
         }
 }
